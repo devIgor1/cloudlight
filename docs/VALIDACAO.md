@@ -129,3 +129,19 @@ Verificação posterior, sem cookie: health 200 (`local: false`), sessão e rota
 
 
 O link sintético de 1 GB foi revogado após essa verificação e passou a retornar HTTP 410. O arquivo expirado de 50 MB já foi excluído e o espaço liberado; o de 1 GB e o diagnóstico final foram destinados à limpeza normal do cron, que processa um arquivo por passagem e só libera a reserva após confirmar ausência no B2. A tabela temporária de diagnóstico foi removida do D1. Não há arquivos de teste públicos disponíveis. O histórico de testes segue a retenção normal de 30 dias.
+
+
+### Conferência posterior no painel B2 — 11/10/2026, 20h05 (Brasília)
+
+Após o titular renovar a sessão, o painel autenticado mostrou:
+
+- Bucket privado e criptografado: **0 arquivos atuais, 0 bytes**.
+- Caps & Alerts: armazenamento de hoje **US$ 0,00 (85 MB)** e download **US$ 0,00 (66 KB)**; limites de US$ 0,00/10 GB e US$ 0,00/1 GB preservados, alertas ativos.
+- Transações diárias: classe B **12/2.500**, classe C **59/2.500**.
+- Reports: **354 transações** (285 A, 12 B, 57 C), com aviso de atualização diária à meia-noite GMT. Diferenças em relação a Caps & Alerts refletem os momentos de atualização; a tela não foi tratada como uma fatura fechada.
+
+O volume de 66 KB exibido em downloads não representa o total transferido pelo aplicativo: os testes de 50 MB e 1 GB tiveram suas cópias completas verificadas separadamente. O painel é compatível com a rota Cloudflare sem cobrança de egress, mas a observação não garante custos futuros.
+
+O D1 ainda conservava a reserva de 1.000.065.536 bytes dos dois últimos testes enquanto aguarda confirmação da limpeza; não foi forçada a liberação da cota. Os links já estavam indisponíveis. Nenhum limite, plano ou configuração de cobrança foi alterado nesta conferência.
+
+Evidências locais: `qa/real/b2-account-after-tests.json`, `b2-cost-after-tests.png`, `b2-bucket-empty.png` e `cleanup-confirmation.json`.

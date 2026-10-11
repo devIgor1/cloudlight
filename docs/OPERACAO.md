@@ -9,7 +9,7 @@ Implementado e validado com arquivos reais de 50 MB e 1 GB em 11/10/2026. A aber
 - Apenas o administrador foi cadastrado. Use Administração para adicionar os primeiros convidados; adicionar à lista não envia um convite por e-mail automaticamente.
 - Testes remotos: 50 MB e 1 GB íntegros, retomada, três e-mails entregues, assinatura/privacidade/expiração e recuperação de finalização. Detalhes no relatório.
 - Workers Free: mediana de 4 ms, P95 de 8 ms e pico de 23 ms, sem interrupção por CPU na amostra. Validar carga antes de ampliar; os picos ocasionais não comprovam capacidade para cem usuários simultâneos.
-- Caps configurados e rota de egress gratuita documentada; consumo/fatura posteriores não foram conferidos após expirar a sessão do painel B2. Não houve upgrade de plano.
+- Após renovar a sessão, o painel B2 foi conferido às 20h05 de 11/10/2026 (Brasília): armazenamento e download com US$ 0,00; bucket com zero arquivos e zero bytes. Caps e alertas continuam ativos. Trata-se do valor exibido no painel, não de fatura fechada; Reports informa atualização diária à meia-noite GMT. Não houve upgrade de plano.
 
 ## Histórico da configuração remota — 11/10/2026
 
