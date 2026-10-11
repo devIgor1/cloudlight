@@ -1,6 +1,15 @@
 # Operação do Cloudlight
 
-Implementado e testado localmente em 11/10/2026. As contas externas ainda não foram configuradas, conforme orientação do usuário. A operação real e o custo zero continuam pendentes de validação.
+Implementado e testado localmente em 11/10/2026. Na mesma data, o usuário autorizou a configuração dos serviços externos para publicação em `workers.dev`. A operação real das integrações e o custo zero continuam pendentes de validação.
+
+## Configuração remota em andamento — 11/10/2026
+
+- Cloudflare autenticada via Wrangler, com credenciais cifradas e chave no Keychain do macOS.
+- Conta e origem previstas registradas em `wrangler.jsonc`: `https://cloudlight.igormraesmm.workers.dev`. Esse endereço ainda não foi publicado.
+- D1 `cloudlight` criado em ENAM; migrações `0001_initial.sql`, `0002_rate_expiry.sql` e `0003_login_cooldown.sql` aplicadas remotamente.
+- Administrador inicial criado no D1 de produção com o e-mail confirmado pelo usuário.
+- B2 e Brevo aguardam criação e configuração das contas. Secrets do aplicativo, publicação do Worker e testes reais ainda pendentes.
+- `PILOT_ENABLED=false` permanece configurado. Nenhum item de validação de provedores foi atestado por estes passos de infraestrutura.
 
 ## Ambiente local
 

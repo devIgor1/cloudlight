@@ -2,9 +2,9 @@
 
 Atualizado em: 11 de outubro de 2026.
 
-Status: implementação local executada em 11/10/2026. Landing migrada para React e fluxo de transferência implementado com D1 e armazenamento emulados. Adaptadores B2/Brevo preparados; contas reais, franquias efetivas e piloto ainda pendentes.
+Status: implementação local executada em 11/10/2026. Configuração de produção iniciada: conta Cloudflare conectada e banco D1 `cloudlight` criado com as três migrações aplicadas. B2, Brevo, validação real das integrações e abertura do piloto ainda pendentes.
 
-**Escopo confirmado pelo usuário:** preparar tudo localmente, sem configurar contas externas nem publicar. Itens marcados abaixo indicam implementação e verificação local; não atestam operação com os provedores. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
+**Escopo atual confirmado pelo usuário:** após concluir a preparação local, configurar Cloudflare, Backblaze B2 e Brevo para publicar no endereço gratuito `workers.dev`. Manter os limites de custo e validar as integrações antes de abrir o piloto. Itens marcados abaixo indicam implementação e verificação local, salvo evidências remotas registradas no guia de operação. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
 
 A landing anterior foi preservada em `reference/`, e seus assets em `public/assets/`. `dist/` agora é saída do Vite. As seções de planos, métricas/depoimentos fictícios e recursos fora do MVP foram substituídas por conteúdo compatível com o serviço.
 
