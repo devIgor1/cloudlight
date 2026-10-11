@@ -2,7 +2,7 @@
 
 Atualizado em: 11 de outubro de 2026.
 
-Status: implementação local executada em 11/10/2026. Configuração de produção iniciada: conta Cloudflare conectada e banco D1 `cloudlight` criado com as três migrações aplicadas. B2, Brevo, validação real das integrações e abertura do piloto ainda pendentes.
+Status: implementação local executada em 11/10/2026. Cloudflare/D1 e bucket privado B2 configurados, com teste real pequeno de armazenamento aprovado. Worker criado para receber os secrets iniciais, sem publicação do aplicativo. Brevo, validação completa das integrações e abertura do piloto ainda pendentes.
 
 **Escopo atual confirmado pelo usuário:** após concluir a preparação local, configurar Cloudflare, Backblaze B2 e Brevo para publicar no endereço gratuito `workers.dev`. Manter os limites de custo e validar as integrações antes de abrir o piloto. Itens marcados abaixo indicam implementação e verificação local, salvo evidências remotas registradas no guia de operação. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
 

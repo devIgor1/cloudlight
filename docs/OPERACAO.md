@@ -8,7 +8,14 @@ Implementado e testado localmente em 11/10/2026. Na mesma data, o usuário autor
 - Conta e origem previstas registradas em `wrangler.jsonc`: `https://cloudlight.igormraesmm.workers.dev`. Esse endereço ainda não foi publicado.
 - D1 `cloudlight` criado em ENAM; migrações `0001_initial.sql`, `0002_rate_expiry.sql` e `0003_login_cooldown.sql` aplicadas remotamente.
 - Administrador inicial criado no D1 de produção com o e-mail confirmado pelo usuário.
-- B2 e Brevo aguardam criação e configuração das contas. Secrets do aplicativo, publicação do Worker e testes reais ainda pendentes.
+- B2 `cloudlight-igormraesmm` criado privado em `us-east-005`, com criptografia SSE-B2/AES256 e Object Lock desativado. Endpoint e região registrados em `wrangler.jsonc`.
+- CORS aplicado pela API nativa: somente `s3_put`, origem exata do Cloudlight, cabeçalhos `content-md5`/`content-type`, exposição de `etag` e cache de 300 s. O preset do painel não permitia PUT; foi substituído pela regra específica. OPTIONS autorizado retornou 200 e origem externa retornou 403.
+- Lifecycle aplicado a `transfers/`: cancelar multipart incompleto após dois dias, ocultar após sete dias e excluir um dia após ocultar. É proteção adicional contra órfãos; a aplicação continua responsável pela expiração de acesso em 48 h e limpeza normal.
+- Caps conferidos no painel: armazenamento US$ 0,00 (10 GB), download diário US$ 0,00 (1 GB), classes B e C com 2.500 operações/dia cada, alertas por e-mail ativos. Isso não comprova ainda a elegibilidade de egress gratuito pela Cloudflare nem os testes de corte em cada teto.
+- Chave `cloudlight-worker` criada no painel, restrita ao bucket e ao prefixo `transfers/`, sem listagem de todos os buckets. O perfil Read and Write do painel inclui permissões de configuração do bucket além das operações de arquivos; não é uma chave limitada apenas às quatro operações do adaptador.
+- Worker `cloudlight` criado pelo Wrangler como rascunho mínimo para armazenar `B2_KEY_ID`, `B2_APPLICATION_KEY` e um `AUTH_SECRET` aleatório de 32 bytes. Secrets remotos conferidos por nome; cópias locais temporárias removidas. O código do aplicativo ainda não foi publicado.
+- Teste real do adaptador com 64 KiB aprovado: multipart/retomada, assinatura, finalização, SHA-256, bloqueio de leitura anônima e exclusão de versões. Executado da máquina local, com contador D1 simulado; não valida o fluxo no Worker ou egress. Evidências detalhadas em `docs/VALIDACAO.md`.
+- Brevo ainda aguarda criação da conta, aprovação do remetente e `BREVO_API_KEY`. Publicação do aplicativo e bateria completa de testes reais pendentes.
 - `PILOT_ENABLED=false` permanece configurado. Nenhum item de validação de provedores foi atestado por estes passos de infraestrutura.
 
 ## Ambiente local

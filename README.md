@@ -2,7 +2,7 @@
 
 Transferência privada de arquivos entre amigos. React + TypeScript + Vite, Cloudflare Worker/D1, adaptador S3 para bucket B2 privado e e-mail transacional Brevo.
 
-A implementação está disponível **localmente**, com banco/armazenamento emulados e caixa de e-mail de teste. A configuração de produção foi iniciada: Cloudflare conectada e banco D1 criado com as migrações aplicadas. B2, Brevo e a validação do piloto continuam pendentes; o aplicativo ainda não foi publicado.
+A implementação está disponível **localmente**, com banco/armazenamento emulados e caixa de e-mail de teste. Cloudflare/D1 e o bucket privado B2 estão configurados; um teste real pequeno de armazenamento passou. O Worker foi criado apenas para receber os secrets iniciais. Brevo, publicação do aplicativo e validação completa do piloto continuam pendentes.
 
 ```sh
 npm ci
