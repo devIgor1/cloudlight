@@ -56,3 +56,9 @@ O adaptador real de `worker/storage.ts` foi executado em Node contra o B2, com a
 OPTIONS para PUT com os cabeçalhos reais retornou 200 para a origem do Cloudlight e 403 para `https://example.com`. Evidências locais sem credenciais estão em `qa/b2-config-verification.json`, `qa/b2-smoke-result.json` e `qa/b2-configured.png` (pasta ignorada no Git).
 
 Isso comprova apenas a configuração e o caminho básico do adaptador. Continuam pendentes: navegador/Worker reais, arquivos de 50 MB e 1 GB, todas as adulterações de assinatura/tamanho, expiração temporal das URLs, execução temporal do lifecycle, egress pela Cloudflare, CPU/cotas e Brevo. Nenhum item abrangente de `pilot-readiness.json` foi atestado com este teste pequeno.
+
+## Preparação do Brevo — 11/10/2026
+
+Conta acessível e remetente `Cloudlight` com status Verified conferidos no painel. Franquia exibida: 300 e-mails/dia. A criação da chave de API foi bloqueada pela exigência de verificar o telefone do titular; nenhuma credencial de API ou mensagem de teste foi gerada.
+
+O endereço `MAIL_FROM` foi movido para a lista de secrets obrigatórios, junto das quatro credenciais existentes no contrato do Worker. Dry-run do Wrangler aprovado. Verificações isoladas do preflight confirmaram: configuração fechada aceita; remetente obrigatório ausente rejeitado; remetente em `vars` públicas rejeitado; piloto sem evidências rejeitado. O dry-run não confirma que os secrets ausentes foram gravados remotamente.

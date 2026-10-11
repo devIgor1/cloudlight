@@ -20,6 +20,15 @@
   ],
   "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": false },
+  "secrets": {
+    "required": [
+      "AUTH_SECRET",
+      "B2_KEY_ID",
+      "B2_APPLICATION_KEY",
+      "BREVO_API_KEY",
+      "MAIL_FROM",
+    ],
+  },
   "vars": {
     "APP_ENV": "production",
     "APP_ORIGIN": "https://cloudlight.igormraesmm.workers.dev",
@@ -27,7 +36,6 @@
     "B2_ENDPOINT": "https://s3.us-east-005.backblazeb2.com",
     "B2_REGION": "us-east-005",
     "B2_BUCKET": "cloudlight-igormraesmm",
-    "MAIL_FROM": "",
     "MAIL_FROM_NAME": "Cloudlight",
   },
 }

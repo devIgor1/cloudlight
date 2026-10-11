@@ -15,7 +15,9 @@ Implementado e testado localmente em 11/10/2026. Na mesma data, o usuário autor
 - Chave `cloudlight-worker` criada no painel, restrita ao bucket e ao prefixo `transfers/`, sem listagem de todos os buckets. O perfil Read and Write do painel inclui permissões de configuração do bucket além das operações de arquivos; não é uma chave limitada apenas às quatro operações do adaptador.
 - Worker `cloudlight` criado pelo Wrangler como rascunho mínimo para armazenar `B2_KEY_ID`, `B2_APPLICATION_KEY` e um `AUTH_SECRET` aleatório de 32 bytes. Secrets remotos conferidos por nome; cópias locais temporárias removidas. O código do aplicativo ainda não foi publicado.
 - Teste real do adaptador com 64 KiB aprovado: multipart/retomada, assinatura, finalização, SHA-256, bloqueio de leitura anônima e exclusão de versões. Executado da máquina local, com contador D1 simulado; não valida o fluxo no Worker ou egress. Evidências detalhadas em `docs/VALIDACAO.md`.
-- Brevo ainda aguarda criação da conta, aprovação do remetente e `BREVO_API_KEY`. Publicação do aplicativo e bateria completa de testes reais pendentes.
+- Conta Brevo criada. Remetente `Cloudlight` aparece como Verified no painel, usando o endereço pessoal confirmado pelo usuário. O painel mostra 300 e-mails disponíveis/dia e avisa que domínio de e-mail gratuito não é recomendado. Isso não equivale a autenticação de domínio próprio ou comprovação de entrega.
+- Brevo exige verificação de telefone antes de permitir a criação de uma chave de API. A janela foi deixada aberta para o titular concluir essa etapa; nenhum código de SMS foi solicitado pelo chat. `BREVO_API_KEY` e `MAIL_FROM` ainda não foram gravados na Cloudflare, e nenhum e-mail real foi enviado nesta etapa.
+- `MAIL_FROM` passou a ser secret, mantendo o endereço pessoal fora do repositório. Os cinco secrets exigidos pelo aplicativo estão declarados em `secrets.required`. Preflight e dry-run aprovados; a publicação real ainda depende dos secrets ausentes e dos próximos passos de configuração.
 - `PILOT_ENABLED=false` permanece configurado. Nenhum item de validação de provedores foi atestado por estes passos de infraestrutura.
 
 ## Ambiente local
@@ -54,14 +56,15 @@ A limpeza local pode ser disparada na administração. Autorizações de partes 
 3. No B2, use um bucket dedicado **privado**, sem dados de outros projetos. Crie application key restrita a esse bucket, com permissões de listar, escrever, ler, excluir arquivos e listar uploads/versões. Configure `B2_ENDPOINT`, `B2_REGION` e `B2_BUCKET`. Não use a master key.
 4. Configure caps/alertas da conta para armazenamento, downloads e operações, considerando o uso de outros produtos. Confirme o comportamento de corte de cada cap. Os contadores da aplicação não cobrem operações realizadas fora dela, tentativas diretas repetidas nas URLs assinadas nem outros aplicativos.
 5. Adapte `b2-cors.example.json` para a origem exata. CORS não substitui autorização. Adapte `b2-lifecycle.example.json` no bucket dedicado como proteção de órfãos; o prazo de sete dias evita apagar arquivos ainda válidos. A expiração de acesso em 48 h continua na API.
-6. No Brevo, verifique o remetente e habilite o uso transacional da API. Configure `MAIL_FROM` e `MAIL_FROM_NAME`. O uso sem domínio próprio depende da aprovação e das regras do provedor; não está confirmado. Se for incompatível, o requisito de custo zero precisa ser resolvido antes do piloto.
-7. Grave secrets pelo CLI, nunca em `vars`, frontend ou Git:
+6. No Brevo, verifique o remetente e habilite o uso transacional da API. Configure o nome público em `MAIL_FROM_NAME`; o endereço `MAIL_FROM` será um secret para não registrar o e-mail pessoal no repositório. O uso sem domínio próprio depende da aprovação e das regras do provedor; não está confirmado. Se for incompatível, o requisito de custo zero precisa ser resolvido antes do piloto.
+7. Grave secrets pelo CLI, nunca em `vars`, frontend ou Git. Os cinco nomes estão declarados em `secrets.required`: o Wrangler exige os bindings no deploy, além da validação local do preflight.
 
 ```sh
 npx wrangler secret put AUTH_SECRET
 npx wrangler secret put B2_KEY_ID
 npx wrangler secret put B2_APPLICATION_KEY
 npx wrangler secret put BREVO_API_KEY
+npx wrangler secret put MAIL_FROM
 ```
 
 Use segredo aleatório com pelo menos 32 bytes para AUTH_SECRET. Trocá-lo invalida desafios e impede decifrar links/outbox antigos; faça rotação planejada depois de expirar/limpar esses registros. Não reutilize o segredo local.

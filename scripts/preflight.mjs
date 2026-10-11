@@ -22,16 +22,22 @@ if (
   !config.vars.B2_BUCKET
 )
   failures.push("Configure endpoint, região e bucket privado do B2.");
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.vars.MAIL_FROM))
-  failures.push("Configure o remetente aprovado pelo Brevo.");
 const secretNames = [
   "AUTH_SECRET",
   "B2_KEY_ID",
   "B2_APPLICATION_KEY",
   "BREVO_API_KEY",
+  "MAIL_FROM",
 ];
 if (secretNames.some((name) => name in config.vars))
-  failures.push("Credenciais devem usar wrangler secret, nunca vars.");
+  failures.push(
+    "Credenciais e remetente devem usar wrangler secret, nunca vars.",
+  );
+for (const name of secretNames)
+  if (!config.secrets?.required?.includes(name))
+    failures.push(
+      `Declare ${name} em secrets.required; o Wrangler verificará o secret no deploy.`,
+    );
 if (config.vars.PILOT_ENABLED === "true") {
   let evidence;
   try {
