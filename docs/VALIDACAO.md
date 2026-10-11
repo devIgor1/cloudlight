@@ -1,6 +1,6 @@
 # Validação — 11/10/2026
 
-A implementação foi inicialmente testada no macOS com Node 24, Chrome, workerd/Miniflare e D1/R2 emulados. Os testes locais abaixo não usaram credenciais reais de B2 ou Brevo. A verificação remota posterior está registrada separadamente no final deste documento; o aplicativo ainda não foi publicado.
+A implementação foi inicialmente testada no macOS com Node 24, Chrome, workerd/Miniflare e D1/R2 emulados. Os testes locais abaixo não usaram credenciais reais de B2 ou Brevo. As verificações remotas posteriores e a primeira publicação, com o piloto fechado, estão registradas separadamente no final deste documento.
 
 ## Resultados
 
@@ -59,6 +59,22 @@ Isso comprova apenas a configuração e o caminho básico do adaptador. Continua
 
 ## Preparação do Brevo — 11/10/2026
 
-Conta acessível e remetente `Cloudlight` com status Verified conferidos no painel. Franquia exibida: 300 e-mails/dia. A criação da chave de API foi bloqueada pela exigência de verificar o telefone do titular; nenhuma credencial de API ou mensagem de teste foi gerada.
+Conta acessível e remetente `Cloudlight` com status Verified conferidos no painel. O titular concluiu a verificação de telefone e criou a chave de API. A API confirmou plano Free com 300 e-mails/dia, relay transacional habilitado e remetente ativo.
 
-O endereço `MAIL_FROM` foi movido para a lista de secrets obrigatórios, junto das quatro credenciais existentes no contrato do Worker. Dry-run do Wrangler aprovado. Verificações isoladas do preflight confirmaram: configuração fechada aceita; remetente obrigatório ausente rejeitado; remetente em `vars` públicas rejeitado; piloto sem evidências rejeitado. O dry-run não confirma que os secrets ausentes foram gravados remotamente.
+O endereço `MAIL_FROM` foi movido para a lista de secrets obrigatórios, junto das quatro credenciais existentes no contrato do Worker. Os cinco secrets foram gravados e conferidos remotamente por nome. Dry-run do Wrangler aprovado. Verificações isoladas do preflight confirmaram: configuração fechada aceita; remetente obrigatório ausente rejeitado; remetente em `vars` públicas rejeitado; piloto sem evidências rejeitado.
+
+Um único e-mail de teste foi enviado ao administrador com autorização explícita do titular. A API retornou HTTP 201 em 11/10/2026 às 22:06:50 UTC, seguida de evento `delivered` às 22:06:51 UTC. Não houve acesso à caixa postal; pasta de destino e remetente efetivamente exibido ainda não foram conferidos. Evidências sem credenciais em `qa/brevo-account-verification.json`, `qa/brevo-test-email-result.json` e `qa/brevo-delivery-verification.json`.
+
+Esse teste direto pela API não exercita a outbox do Worker, códigos de acesso, links de transferências, tratamento real de rejeições/cotas nem entrega em outros provedores. A validação completa do piloto permanece pendente.
+
+## Primeira publicação com piloto fechado — 11/10/2026
+
+`npm run deploy` concluiu preflight, TypeScript, build Vite e publicação após a ampliação das permissões OAuth do Wrangler autorizada pelo titular. Versão Cloudflare: `9c49360d-ea26-4bb2-acd0-464b6d4affbe`; origem `https://cloudlight.igormraesmm.workers.dev`; cron `*/5 * * * *`.
+
+- Página inicial, JavaScript e CSS: HTTP 200.
+- Página inicial renderizada no navegador, com conteúdo e navegação do Cloudlight.
+- `/api/health` e `/api/dev/inbox`: HTTP 503 com mensagem de piloto em preparação, confirmando o bloqueio de produção por `PILOT_ENABLED=false`.
+- Cinco secrets presentes após o deploy, conferidos por nome, sem leitura/exposição dos valores.
+- Evidências locais: `qa/cloudflare-deployment-verification.json` e `qa/cloudlight-live.png`.
+
+O tempo de inicialização informado pelo Wrangler não mede CPU por requisição e não comprova a capacidade de processar transferências de 1 GB no plano Free. Login, upload e download reais pelo Worker seguem pendentes; o piloto não foi aberto.

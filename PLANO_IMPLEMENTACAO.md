@@ -2,7 +2,7 @@
 
 Atualizado em: 11 de outubro de 2026.
 
-Status: implementação local executada em 11/10/2026. Cloudflare/D1 e bucket privado B2 configurados, com teste real pequeno de armazenamento aprovado. Worker criado para receber os secrets iniciais, sem publicação do aplicativo. Conta Brevo criada e remetente verificado no painel; a chave de API depende da verificação do telefone. Integração de e-mail, validação completa e abertura do piloto ainda pendentes.
+Status: implementação local e primeira publicação executadas em 11/10/2026. Cloudflare/D1, bucket privado B2 e Brevo configurados, com os cinco secrets gravados e testes reais pequenos de armazenamento e entrega de e-mail aprovados. Página acessível em `https://cloudlight.igormraesmm.workers.dev`; login e transferências fechados por `PILOT_ENABLED=false`. Validação completa e abertura do piloto ainda pendentes.
 
 **Escopo atual confirmado pelo usuário:** após concluir a preparação local, configurar Cloudflare, Backblaze B2 e Brevo para publicar no endereço gratuito `workers.dev`. Manter os limites de custo e validar as integrações antes de abrir o piloto. Itens marcados abaixo indicam implementação e verificação local, salvo evidências remotas registradas no guia de operação. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
 
@@ -263,4 +263,4 @@ Estimativa original de planejamento: 3–6 semanas para um piloto. A implementa�
 - 50 MB e 1 GB enviados e baixados localmente, com comparação integral de SHA-256.
 - Pausa, recarga e retomada verificadas no navegador sem reenviar a parte já recebida.
 - Produção começa com `PILOT_ENABLED=false`; preflight verifica a configuração e exige evidências reais para a abertura do piloto.
-- Primeiro marco externo pendente: configurar as três contas e validar o fluxo real com um administrador. Marco seguinte: cinco amigos, antes de ampliar.
+- As três contas estão configuradas e a primeira publicação está acessível. Próximo marco externo: validar o fluxo real com um administrador. Marco seguinte: cinco amigos, antes de ampliar.
