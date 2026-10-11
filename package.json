@@ -1,0 +1,11 @@
+{
+  "name": "cloudlight-reconstruction",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Faithful, self-contained reconstruction of the Cloudlight presentation website.",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "check": "node --check dist/app.js && node --check dist/effects.js && node --check dist/gl-surface.js && node scripts/check.mjs"
+  }
+}

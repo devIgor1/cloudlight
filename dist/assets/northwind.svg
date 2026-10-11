@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="135" height="24" viewBox="0 0 135 24" role="img" aria-label="Northwind">
+  <g><path d="M4 20 12 4l8 16-8-5z" fill="currentColor"/></g>
+  <text x="30" y="17" font-family="Geist, ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" letter-spacing="-0.02em" fill="currentColor">Northwind</text>
+</svg>
