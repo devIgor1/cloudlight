@@ -56,7 +56,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
   );
   if (!local(env))
     assert(
-      env.PILOT_ENABLED === "true",
+      ["true", "admin"].includes(env.PILOT_ENABLED),
       503,
       "O piloto ainda está em preparação.",
     );
@@ -90,6 +90,16 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
     return verifyCode(request, env);
   if (path === "/api/auth/logout" && method === "POST")
     return logout(request, env);
+  // Validate the deployed providers with the existing administrator before
+  // opening invited-user access or anonymous transfer links.
+  const validationUser =
+    env.PILOT_ENABLED === "admin" ? await session(request, env) : null;
+  if (validationUser)
+    assert(
+      validationUser.role === "admin",
+      503,
+      "O piloto ainda está em preparação.",
+    );
   const pub = path.match(/^\/api\/public\/([\w-]+)(?:\/files\/([\w-]+))?$/);
   if (pub && method === "GET") {
     const t = await publicTransfer(env, pub[1]);
@@ -135,7 +145,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
       );
     return new Response(upstream.body, { status: upstream.status, headers });
   }
-  const user = await session(request, env);
+  const user = validationUser || (await session(request, env));
   if (path === "/api/me" && method === "GET")
     return json({ user, limits: LIMITS, local: local(env) });
   if (path === "/api/transfers" && method === "POST")
@@ -168,15 +178,22 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
   if (file) {
     const f = await fileFor(env, file[1], user);
     if (method === "POST" && file[2] === "start") return startFile(env, f);
-    if (method === "GET" && file[2] === "parts")
-      return json(
-        f.status === "complete"
-          ? { complete: true, parts: [] }
-          : {
-              complete: false,
-              parts: f.upload_id ? await new Storage(env).parts(f) : [],
-            },
-      );
+    if (method === "GET" && file[2] === "parts") {
+      if (f.status === "complete") return json({ complete: true, parts: [] });
+      try {
+        return json({
+          complete: false,
+          parts: f.upload_id ? await new Storage(env).parts(f) : [],
+        });
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 409) throw error;
+        // CompleteMultipartUpload may have succeeded before its response or
+        // the following HEAD/D1 write failed. The old multipart no longer
+        // exists; reconcile the object's size and checksum before resuming.
+        await completeFile(env, f);
+        return json({ complete: true, parts: [] });
+      }
+    }
     if (method === "POST" && file[2] === "authorize")
       return authorizePart(request, env, f);
     if (method === "POST" && file[2] === "finish") return completeFile(env, f);

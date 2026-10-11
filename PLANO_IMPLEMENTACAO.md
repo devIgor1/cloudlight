@@ -2,9 +2,9 @@
 
 Atualizado em: 11 de outubro de 2026.
 
-Status: implementação local e primeira publicação executadas em 11/10/2026. Cloudflare/D1, bucket privado B2 e Brevo configurados, com os cinco secrets gravados e testes reais pequenos de armazenamento e entrega de e-mail aprovados. Página acessível em `https://cloudlight.igormraesmm.workers.dev`; login e transferências fechados por `PILOT_ENABLED=false`. Validação completa e abertura do piloto ainda pendentes.
+Status: piloto por convite publicado em 11/10/2026 em `https://cloudlight.igormraesmm.workers.dev`, com login e transferências habilitados por `PILOT_ENABLED=true`. Cloudflare/D1, B2 privado e Brevo configurados. Testes reais de 50 MB e 1 GB aprovados com SHA-256 integral, pausa/recarga/retomada, entrega dos três e-mails, restrições de assinatura, expiração e limpeza. A validação não equivale a teste de carga para cem usuários; começar com até cinco convidados.
 
-**Escopo atual confirmado pelo usuário:** após concluir a preparação local, configurar Cloudflare, Backblaze B2 e Brevo para publicar no endereço gratuito `workers.dev`. Manter os limites de custo e validar as integrações antes de abrir o piloto. Itens marcados abaixo indicam implementação e verificação local, salvo evidências remotas registradas no guia de operação. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
+**Escopo atual confirmado pelo usuário:** configurar os provedores, executar os testes reais de 50 MB e 1 GB e liberar login e transferências após aprovação. Manter os limites de custo. Itens marcados abaixo indicam implementação e verificação local, salvo evidências remotas registradas no guia de operação. Consulte [README.md](README.md), [guia de operação](docs/OPERACAO.md) e [relatório de validação](docs/VALIDACAO.md).
 
 A landing anterior foi preservada em `reference/`, e seus assets em `public/assets/`. `dist/` agora é saída do Vite. As seções de planos, métricas/depoimentos fictícios e recursos fora do MVP foram substituídas por conteúdo compatível com o serviço.
 
@@ -186,7 +186,8 @@ As telas terão estados de carregamento, vazio, sucesso, erro, acesso negado, co
 - [x] Revisar depoimentos e números demonstrativos para não apresentá-los como resultados reais do serviço.
 - [x] Preservar a paleta e o acabamento visual durante essas alterações.
 - [x] Executar os testes de aceitação abaixo.
-- [ ] Liberar o piloto para cinco amigos.
+- [x] Habilitar login por convite e transferências após os testes reais.
+- [ ] Cadastrar os primeiros cinco amigos quando o administrador definir os e-mails.
 - [ ] Corrigir os problemas observados antes de ampliar os convites até 100 usuários.
 
 **Critério de conclusão:** o serviço funciona com dados reais, comunica seus limites corretamente e interrompe operações quando necessário para permanecer nas franquias.
@@ -208,7 +209,7 @@ Aplicar índices às consultas frequentes e retenção aos registros antigos par
 
 ## 8. Testes de aceitação
 
-As marcações desta seção correspondem à emulação local e aos testes de falhas com rede interceptada. A repetição em Cloudflare/B2/Brevo reais continua obrigatória antes do piloto.
+As marcações desta seção incluem emulação local e falhas com rede interceptada. A bateria remota com Cloudflare/B2/Brevo está discriminada em `docs/VALIDACAO.md`; não se deve atribuir a todos os casos controlados uma execução remota.
 
 - [x] Envio e download de arquivos de 50 MB e 1 GB, comparando a integridade do original e da cópia.
 - [x] Recusa de uma transferência acima de 1 GB.
@@ -263,4 +264,4 @@ Estimativa original de planejamento: 3–6 semanas para um piloto. A implementa�
 - 50 MB e 1 GB enviados e baixados localmente, com comparação integral de SHA-256.
 - Pausa, recarga e retomada verificadas no navegador sem reenviar a parte já recebida.
 - Produção começa com `PILOT_ENABLED=false`; preflight verifica a configuração e exige evidências reais para a abertura do piloto.
-- As três contas estão configuradas e a primeira publicação está acessível. Próximo marco externo: validar o fluxo real com um administrador. Marco seguinte: cinco amigos, antes de ampliar.
+- As três contas estão configuradas, o fluxo real com o administrador passou e o piloto foi aberto. Próximo marco: até cinco amigos, acompanhar consumo e falhas, e testar carga antes de ampliar.

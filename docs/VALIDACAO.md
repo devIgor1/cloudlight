@@ -78,3 +78,54 @@ Esse teste direto pela API não exercita a outbox do Worker, códigos de acesso,
 - Evidências locais: `qa/cloudflare-deployment-verification.json` e `qa/cloudlight-live.png`.
 
 O tempo de inicialização informado pelo Wrangler não mede CPU por requisição e não comprova a capacidade de processar transferências de 1 GB no plano Free. Login, upload e download reais pelo Worker seguem pendentes; o piloto não foi aberto.
+
+
+## Testes reais de 50 MB e 1 GB — 11/10/2026
+
+Executados pelo navegador no endereço público, com Worker/D1 da Cloudflare, upload multipart direto ao B2 privado e download transmitido pelo Worker. Arquivos sintéticos aleatórios, sem conteúdo pessoal:
+
+| Arquivo | Bytes enviados e recebidos | SHA-256 do original e do download | Resultado |
+| --- | ---: | --- | --- |
+| 50 MB | 50.000.000 | `278062240d82fd7ce01db8d9148097d89e646fe0baa50490c6b7d84868e33d02` | Idênticos |
+| 1 GB | 1.000.000.000 | `d5b5b35899b1e0250600754f939dd9a537924cb6b2d095abff5284208de5543a` | Idênticos |
+
+O arquivo de 1 GB utilizou 120 partes. O envio foi interrompido, a página recarregada, o original selecionado novamente e as partes já recebidas reaproveitadas. A soma de 1 GB + 50 MB foi recusada pela interface. Os três e-mails autorizados (login e duas transferências) foram enviados uma vez cada pela outbox real e tiveram evento `delivered` confirmado na API Brevo. O titular concluiu pessoalmente a autenticação com o código recebido. Não houve envio a amigos.
+
+Os testes encontraram e corrigiram uma falha no botão de pausa: o abort podia trocar o botão por um submit antes da ação padrão do clique, retomando o envio. O handler agora cancela essa ação padrão. Pausa, recarga e retomada foram repetidas com sucesso no navegador real.
+
+O modo temporário `PILOT_ENABLED=admin` permite validar os provedores somente com administradores autenticados. Convidados não recebem códigos nem aproveitam sessões antigas; os links de transferência exigem administrador durante essa validação. Dois testes de regressão cobrem o bloqueio de modos inválidos/fechados e as restrições do modo administrativo. `npm run check`: 21 aprovados e um teste local de 1 GB ignorado por padrão; a transferência de 1 GB desta seção foi executada remotamente.
+
+### CPU medida no Worker Free
+
+As primeiras requisições de autorização consumiam cerca de 8–9 ms. Reutilizar o cliente S3 e seu cache de chaves derivadas reduziu esse custo para cerca de 4–5 ms. A amostra após a otimização teve 109 invocações, mediana de 4 ms, P95 de 8 ms, pico de 23 ms na finalização de 120 partes, uma interrupção intencional e nenhuma exceção/`exceededCpu`/`exceededMemory`. O download de 1 GB completou com integridade, sem buffer integral no Worker.
+
+O pico **não está abaixo de 10 ms**. A [documentação da Cloudflare](https://developers.cloudflare.com/workers/platform/limits/#cpu-time) admite ultrapassagens infrequentes por isolate; não se deve tratar o teste como garantia de capacidade para cem usuários simultâneos. Antes de ampliar o grupo, repetir medições sob carga e dividir a finalização em etapas caso esses picos deixem de ser ocasionais. O tempo de inicialização do deploy não foi usado como medida de CPU por requisição.
+
+### Restrições e cotas
+
+Um diagnóstico temporário, protegido pela sessão administrativa e verificação de origem, executou as chamadas do adaptador dentro do Worker, usando um objeto sintético de 64 KiB. Número da parte, chave do objeto, upload ID, MD5 assinado e tamanho adulterados receberam HTTP 403 (`SignatureDoesNotMatch`); conteúdo divergente recebeu HTTP 400 (`BadDigest`). A parte correta e sua repetição receberam 200; ListParts confirmou apenas uma parte de 65.536 bytes. GET anônimo direto no B2 recebeu 401.
+
+No D1 real, o contador diário foi testado com teto de uma operação: a segunda chamada foi bloqueada e o contador permaneceu em um. Uma transação tentou reservar o espaço restante até 8 GB e mais um byte; o trigger recusou a operação e o rollback preservou os 1,05 GB originais, sem criar reservas extras ou gravar arquivos grandes para esse teste de cota. O prazo do registro sintético de 50 MB foi antecipado e o link recusou acesso enquanto o registro ainda estava `ready`, antes da limpeza.
+
+Evidências locais, ignoradas pelo Git: `qa/real/fixtures.json`, `50MB-result.json`, `1GB-result.json`, `1GB-paused.png`, `expired-transfer.png`, `signature-results.json`, `cpu-before-optimization.json`, `cpu-after-optimization.json` e `tail-sanitized.ndjson`. O tail foi filtrado antes da gravação para remover cookies, cabeçalhos, query strings, tokens e payloads.
+
+
+### Recuperação da finalização e limites da evidência
+
+O diagnóstico de 64 KiB revelou uma falha temporária de HEAD imediatamente após o B2 concluir o multipart. O objeto existia e uma consulta posterior confirmou o tamanho. A retomada agora reconcilia o objeto concluído quando ListParts informa que o multipart não existe mais, verificando tamanho e ETag antes de marcar sucesso. O navegador também repete a finalização idempotente até três vezes em falhas transitórias. Teste de regressão aprovado; a rota real de retomada retornou HTTP 200 com `complete: true` para o objeto que havia apresentado a falha. Evidência em `qa/real/recovery-result.json`, preservando o erro original do diagnóstico.
+
+A URL assinada vencida foi recusada com HTTP 401. A limpeza real confirmou a remoção das versões do primeiro diagnóstico; o cron removeu o arquivo expirado de 50 MB e marcou seus registros como `deleted`.
+
+As contas e caps foram conferidos durante a configuração nesta data. Os testes não esgotaram fisicamente as franquias de Cloudflare/D1/B2/Brevo e não simularam cem usuários simultâneos. Os cortes de e-mail e operações foram exercitados com respostas controladas e contadores; o limite diário e a reserva de 8 GB também foram exercitados no D1 real. As regras de lifecycle foram conferidas, sem aguardar sete dias; a limpeza normal foi observada no provedor real.
+
+Os downloads de 50 MB e 1 GB percorreram B2 → Worker → navegador. A [documentação do B2](https://www.backblaze.com/docs/cloud-storage-deliver-private-backblaze-b2-content-through-cloudflare-cdn) identifica esse caminho, inclusive `workers.dev`, como elegível à transferência gratuita. Isso não equivale a conferir uma fatura fechada. A sessão do painel B2 expirou durante a consulta final de consumo; os caps anteriormente confirmados não foram alterados. Nenhum plano pago foi ativado.
+
+
+### Publicação do piloto
+
+`npm run deploy` aprovou preflight, TypeScript e build, e publicou a versão `4a135303-1a0b-4ae1-8e3b-51fd3c3f51bc` com `PILOT_ENABLED=true` e o entrypoint normal `worker/index.ts`. O diagnóstico temporário não integra essa versão. O administrador existente pode enviar arquivos e adicionar convidados; nenhum amigo foi cadastrado automaticamente.
+
+Verificação posterior, sem cookie: health 200 (`local: false`), sessão e rotas administrativas 401, metadados do link sintético de 1 GB 200, download Range de 1 MiB com 206 e hash idêntico ao trecho original. Cabeçalhos `no-store` e `no-referrer` presentes. Evidência: `qa/real/release-verification.json`. O teste confirmou que o destinatário pode baixar com o link válido sem ter conta.
+
+
+O link sintético de 1 GB foi revogado após essa verificação e passou a retornar HTTP 410. O arquivo expirado de 50 MB já foi excluído e o espaço liberado; o de 1 GB e o diagnóstico final foram destinados à limpeza normal do cron, que processa um arquivo por passagem e só libera a reserva após confirmar ausência no B2. A tabela temporária de diagnóstico foi removida do D1. Não há arquivos de teste públicos disponíveis. O histórico de testes segue a retenção normal de 30 dias.

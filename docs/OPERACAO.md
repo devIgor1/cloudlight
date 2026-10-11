@@ -1,8 +1,17 @@
 # Operação do Cloudlight
 
-Implementado e testado localmente em 11/10/2026. Na mesma data, o usuário autorizou a configuração dos serviços externos para publicação em `workers.dev`. A operação real das integrações e o custo zero continuam pendentes de validação.
+Implementado e validado com arquivos reais de 50 MB e 1 GB em 11/10/2026. A abertura do piloto por convite foi autorizada pelo titular após esses testes. Resultados, correções e limites da validação estão em [VALIDACAO.md](VALIDACAO.md). Permanecer nas franquias depende dos caps configurados e do consumo da conta; não é uma garantia irrestrita de custo zero.
 
-## Configuração remota em andamento — 11/10/2026
+## Estado atual do piloto
+
+- `PILOT_ENABLED=true`: login para convidados ativos, envio autenticado e download por link secreto válido.
+- Versão publicada: `4a135303-1a0b-4ae1-8e3b-51fd3c3f51bc`. Cron a cada cinco minutos; diagnósticos temporários removidos.
+- Apenas o administrador foi cadastrado. Use Administração para adicionar os primeiros convidados; adicionar à lista não envia um convite por e-mail automaticamente.
+- Testes remotos: 50 MB e 1 GB íntegros, retomada, três e-mails entregues, assinatura/privacidade/expiração e recuperação de finalização. Detalhes no relatório.
+- Workers Free: mediana de 4 ms, P95 de 8 ms e pico de 23 ms, sem interrupção por CPU na amostra. Validar carga antes de ampliar; os picos ocasionais não comprovam capacidade para cem usuários simultâneos.
+- Caps configurados e rota de egress gratuita documentada; consumo/fatura posteriores não foram conferidos após expirar a sessão do painel B2. Não houve upgrade de plano.
+
+## Histórico da configuração remota — 11/10/2026
 
 - Cloudflare autenticada via Wrangler, com credenciais cifradas e chave no Keychain do macOS.
 - Conta e origem registradas em `wrangler.jsonc`: `https://cloudlight.igormraesmm.workers.dev`. Primeira versão publicada em 11/10/2026, com página acessível e API fechada para o piloto.
@@ -21,7 +30,7 @@ Implementado e testado localmente em 11/10/2026. Na mesma data, o usuário autor
 - O remetente usa domínio gratuito. O Brevo informa que substitui temporariamente esse tipo de endereço por um domínio de envio próprio; essa medida não equivale a autenticar um domínio do Cloudlight e não garante entregabilidade futura. Verificar o remetente exibido e a pasta de destino durante os testes completos.
 - `MAIL_FROM` passou a ser secret, mantendo o endereço pessoal fora do repositório. Os cinco secrets exigidos pelo aplicativo estão declarados em `secrets.required`. Preflight e build aprovados. A autorização OAuth foi ampliada pelo titular com `workers_scripts:write` e `workers_routes:write`, resolvendo a recusa inicial da API de versões.
 - Publicação concluída: versão `9c49360d-ea26-4bb2-acd0-464b6d4affbe`, cron a cada cinco minutos. Página, JavaScript e CSS retornaram HTTP 200; `/api/health` e `/api/dev/inbox` retornaram HTTP 503 com a mensagem de piloto em preparação, como esperado. Não usar essa publicação fechada como evidência de testes completos das transferências.
-- `PILOT_ENABLED=false` permanece configurado. Nenhum item de validação de provedores foi atestado por estes passos de infraestrutura.
+- Na primeira publicação, `PILOT_ENABLED=false` manteve a API fechada. A validação posterior usou `admin`, seguida da abertura com `true`. Os testes pequenos desta seção não foram usados isoladamente para atestar os testes grandes.
 
 ## Ambiente local
 
@@ -59,7 +68,7 @@ A limpeza local pode ser disparada na administração. Autorizações de partes 
 3. No B2, use um bucket dedicado **privado**, sem dados de outros projetos. Crie application key restrita a esse bucket, com permissões de listar, escrever, ler, excluir arquivos e listar uploads/versões. Configure `B2_ENDPOINT`, `B2_REGION` e `B2_BUCKET`. Não use a master key.
 4. Configure caps/alertas da conta para armazenamento, downloads e operações, considerando o uso de outros produtos. Confirme o comportamento de corte de cada cap. Os contadores da aplicação não cobrem operações realizadas fora dela, tentativas diretas repetidas nas URLs assinadas nem outros aplicativos.
 5. Adapte `b2-cors.example.json` para a origem exata. CORS não substitui autorização. Adapte `b2-lifecycle.example.json` no bucket dedicado como proteção de órfãos; o prazo de sete dias evita apagar arquivos ainda válidos. A expiração de acesso em 48 h continua na API.
-6. No Brevo, verifique o remetente e habilite o uso transacional da API. Configure o nome público em `MAIL_FROM_NAME`; o endereço `MAIL_FROM` será um secret para não registrar o e-mail pessoal no repositório. O uso sem domínio próprio depende da aprovação e das regras do provedor; não está confirmado. Se for incompatível, o requisito de custo zero precisa ser resolvido antes do piloto.
+6. No Brevo, verifique o remetente e habilite o uso transacional da API. Configure o nome público em `MAIL_FROM_NAME`; o endereço `MAIL_FROM` será um secret para não registrar o e-mail pessoal no repositório. O uso sem domínio próprio depende da aprovação e das regras do provedor; o remetente desta conta foi aprovado e entregou os três e-mails do fluxo real. Se for incompatível, o requisito de custo zero precisa ser resolvido antes do piloto.
 7. Grave secrets pelo CLI, nunca em `vars`, frontend ou Git. Os cinco nomes estão declarados em `secrets.required`: o Wrangler exige os bindings no deploy, além da validação local do preflight.
 
 ```sh
@@ -73,10 +82,10 @@ npx wrangler secret put MAIL_FROM
 Use segredo aleatório com pelo menos 32 bytes para AUTH_SECRET. Trocá-lo invalida desafios e impede decifrar links/outbox antigos; faça rotação planejada depois de expirar/limpar esses registros. Não reutilize o segredo local.
 
 8. Aplique o esquema remoto com `npx wrangler d1 migrations apply cloudlight --remote`. Edite uma cópia de `bootstrap-admin.example.sql` com o e-mail real e execute-a nesse D1. Nenhum seed local deve ser executado em produção.
-9. `npm run deploy` valida configuração e publica no Workers, sem usar o antigo Site estático. Com `PILOT_ENABLED=false`, a API permanece fechada. A conta/piloto só deve ser aberto após a bateria real abaixo. Para um teste privado dos provedores, use configuração de staging e bucket/D1 isolados, somente com seu administrador convidado, sem enviar convites a amigos.
+9. `npm run deploy` valida configuração e publica no Workers, sem usar o antigo Site estático. Com `PILOT_ENABLED=false`, a API permanece fechada. A conta/piloto só deve ser aberto após a bateria real abaixo. Para testes posteriores, prefira staging com bucket/D1 isolados. Na validação inicial, com apenas o administrador e arquivos sintéticos, `PILOT_ENABLED=admin` restringiu toda a API autenticada e os links públicos ao administrador. Nesse modo, convidados não recebem códigos e sessões de convidados continuam bloqueadas. O modo `false` fecha a API, `admin` permite validação privada e `true` abre login por convite e links públicos válidos.
 10. Após validar, copie `pilot-readiness.example.json` para `pilot-readiness.json`, documente a data e as evidências, marque somente os testes aprovados e ajuste `PILOT_ENABLED=true`. O preflight bloqueia a abertura com itens pendentes. Essa atestação local não consulta as contas nem substitui os testes.
 
-## Testes reais ainda obrigatórios
+## Roteiro de validação e ampliação
 
 - Um arquivo de 50 MB e um de 1 GB: upload no navegador, interromper/recarregar/retomar, receber e-mail e comparar SHA-256 do download inteiro.
 - Em uma URL assinada, tentar outro número, arquivo, multipart, Content-MD5, conteúdo e tamanho; o provedor deve recusar sem armazenar dados adicionais. Testar repetição da mesma parte, expiração e limpeza de versões/órfãos.
@@ -85,7 +94,7 @@ Use segredo aleatório com pelo menos 32 bytes para AUTH_SECRET. Trocá-lo inval
 - Medir CPU por requisição no Worker Free, especialmente ListParts/Complete para 1 GB, e o número de subrequests. O emulador não impõe o limite de CPU da conta gratuita. Se necessário, reduzir lotes ou separar etapas antes de abrir.
 - Alcançar cada teto de teste com valores temporariamente menores: espaço, e-mails, operações, D1 e limites do provedor. Conferir que o corte acontece sem ativação de cobrança.
 - Confirmar remetente, caixa de entrada, rejeições, timeout e fila Brevo. “Aceito pelo e-mail” não significa entrega ou leitura.
-- Só então convidar cinco amigos, observar falhas e ampliar gradualmente até cem.
+- Os testes executados estão no relatório de validação. Convidar inicialmente até cinco amigos, observar falhas e consumo, e repetir medições sob carga antes de ampliar até cem.
 
 ## Franquias e fontes consultadas em 11/10/2026
 

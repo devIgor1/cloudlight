@@ -212,3 +212,84 @@ test("S3 signatures bind key, multipart ID, number, length and checksum; cleanup
     await f.mf.dispose();
   }
 });
+
+test("resume reconciles an upstream completion after the final HEAD failed", async () => {
+  const raw = Buffer.alloc(65536, 73);
+  const md5 = createHash("md5").update(raw).digest("hex");
+  const etag =
+    createHash("md5").update(Buffer.from(md5, "hex")).digest("hex") + "-1";
+  let completed = false,
+    failHead = true,
+    completionCalls = 0;
+  const f = await fixture({
+    bindings,
+    outboundService: async (request: Request) => {
+      const url = new URL(request.url);
+      if (request.method === "HEAD") {
+        if (!completed) return new MockResponse(null, { status: 404 });
+        if (failHead) {
+          failHead = false;
+          return new MockResponse(null, { status: 503 });
+        }
+        return new MockResponse(null, {
+          headers: { "content-length": String(raw.length), etag },
+        });
+      }
+      if (url.searchParams.has("uploads"))
+        return new MockResponse("<ListMultipartUploadsResult/>");
+      if (request.method === "POST") {
+        completed = true;
+        completionCalls++;
+        return new MockResponse(
+          `<CompleteMultipartUploadResult><ETag>${etag}</ETag></CompleteMultipartUploadResult>`,
+        );
+      }
+      if (completed)
+        return new MockResponse("<Error><Code>NoSuchUpload</Code></Error>", {
+          status: 404,
+        });
+      return new MockResponse(
+        `<ListPartsResult><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><Size>${raw.length}</Size><ETag>${md5}</ETag></Part></ListPartsResult>`,
+      );
+    },
+  });
+  try {
+    const cookie = await f.cookieFor();
+    const transfer = await f.transfer(cookie, raw.length);
+    const id = transfer.files[0].id;
+    await f.db
+      .prepare(
+        "UPDATE files SET status='uploading',upload_id='completed-upstream' WHERE id=?",
+      )
+      .bind(id)
+      .run();
+    await f.db
+      .prepare("INSERT INTO parts(file_id,number,size,md5) VALUES(?,1,?,?)")
+      .bind(id, raw.length, createHash("md5").update(raw).digest("base64"))
+      .run();
+    assert.equal(
+      (await f.call(`/files/${id}/finish`, "POST", {}, cookie)).status,
+      500,
+    );
+    const resumed = await f.call(
+      `/files/${id}/parts`,
+      "GET",
+      undefined,
+      cookie,
+    );
+    assert.equal(resumed.status, 200);
+    assert.deepEqual(resumed.data, { complete: true, parts: [] });
+    assert.equal(completionCalls, 1);
+    assert.equal(
+      (
+        await f.db
+          .prepare("SELECT status FROM files WHERE id=?")
+          .bind(id)
+          .first<any>()
+      ).status,
+      "complete",
+    );
+  } finally {
+    await f.mf.dispose();
+  }
+});

@@ -32,7 +32,7 @@
   "vars": {
     "APP_ENV": "production",
     "APP_ORIGIN": "https://cloudlight.igormraesmm.workers.dev",
-    "PILOT_ENABLED": "false",
+    "PILOT_ENABLED": "true",
     "B2_ENDPOINT": "https://s3.us-east-005.backblazeb2.com",
     "B2_REGION": "us-east-005",
     "B2_BUCKET": "cloudlight-igormraesmm",

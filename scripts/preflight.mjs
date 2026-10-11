@@ -4,6 +4,8 @@ const config = parse(
   await readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8"),
 );
 const failures = [];
+if (!["false", "admin", "true"].includes(config.vars.PILOT_ENABLED))
+  failures.push("PILOT_ENABLED deve ser false, admin ou true.");
 if (config.vars.APP_ENV !== "production")
   failures.push("APP_ENV deve ser production.");
 if (!/^[0-9a-f-]{36}$/i.test(config.d1_databases[0].database_id))
@@ -80,5 +82,7 @@ if (failures.length) {
 console.log(
   config.vars.PILOT_ENABLED === "true"
     ? "Configuração pronta para publicar o piloto validado."
-    : "Configuração pronta; a API permanecerá fechada enquanto PILOT_ENABLED=false.",
+    : config.vars.PILOT_ENABLED === "admin"
+      ? "Validação restrita a administradores; convidados e links anônimos continuam bloqueados."
+      : "Configuração pronta; a API permanecerá fechada enquanto PILOT_ENABLED=false.",
 );

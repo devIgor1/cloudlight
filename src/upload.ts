@@ -162,7 +162,25 @@ export async function uploadTransfer(
     const failed = outcomes.find((x) => x.status === "rejected");
     if (failed?.status === "rejected") throw failed.reason;
     signal.throwIfAborted();
-    await post(`/files/${file.id}/finish`, {}, { signal });
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await post(`/files/${file.id}/finish`, {}, { signal });
+        break;
+      } catch (error) {
+        // A provider may complete the object before a verification request
+        // fails. Retrying this idempotent endpoint reconciles it via HEAD.
+        if (
+          signal.aborted ||
+          attempt >= 2 ||
+          (error instanceof ApiError &&
+            error.status < 500 &&
+            ![408, 429].includes(error.status) &&
+            error.code !== "FILE_BUSY")
+        )
+          throw error;
+        await delay(500 * 2 ** attempt, signal);
+      }
+    }
     previous += file.size;
     onProgress(previous);
   }

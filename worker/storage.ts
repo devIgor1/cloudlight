@@ -10,6 +10,8 @@ const xml = new XMLParser({
   parseTagValue: false,
   processEntities: false,
 });
+let cachedClient:
+  { id: string; secret: string; region: string; client: AwsClient } | undefined;
 const list = <T>(item: T | T[] | undefined): T[] =>
   item === undefined ? [] : Array.isArray(item) ? item : [item];
 export const cleanEtag = (etag: string) =>
@@ -32,13 +34,27 @@ export class Storage {
     return url;
   }
   private client() {
-    return new AwsClient({
-      accessKeyId: this.env.B2_KEY_ID,
-      secretAccessKey: this.env.B2_APPLICATION_KEY,
-      service: "s3",
-      region: this.env.B2_REGION,
-      retries: 0,
-    });
+    // AwsClient caches the derived daily signing key. Reusing it avoids four
+    // HMAC derivations for every S3 operation on the Workers Free CPU budget.
+    if (
+      !cachedClient ||
+      cachedClient.id !== this.env.B2_KEY_ID ||
+      cachedClient.secret !== this.env.B2_APPLICATION_KEY ||
+      cachedClient.region !== this.env.B2_REGION
+    )
+      cachedClient = {
+        id: this.env.B2_KEY_ID,
+        secret: this.env.B2_APPLICATION_KEY,
+        region: this.env.B2_REGION,
+        client: new AwsClient({
+          accessKeyId: this.env.B2_KEY_ID,
+          secretAccessKey: this.env.B2_APPLICATION_KEY,
+          service: "s3",
+          region: this.env.B2_REGION,
+          retries: 0,
+        }),
+      };
+    return cachedClient.client;
   }
   private async request(
     method: string,
@@ -57,8 +73,14 @@ export class Storage {
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok && response.status !== 404 && response.status !== 416) {
-      await response.body?.cancel();
-      throw new Error("STORAGE_UNAVAILABLE");
+      const code = (await response.text()).match(
+        /<Code>([A-Za-z0-9]+)<\/Code>/,
+      )?.[1];
+      // Keep diagnostics useful without propagating the provider's XML, keys,
+      // signed URLs or request identifiers to application logs or responses.
+      throw new Error(
+        `STORAGE_UNAVAILABLE:${response.status}:${code || "unknown"}`,
+      );
     }
     return response;
   }

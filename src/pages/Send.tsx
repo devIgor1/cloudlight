@@ -399,7 +399,12 @@ export default function Send() {
               <button
                 type="button"
                 className="button full"
-                onClick={() => controller.current?.abort()}
+                onClick={(event) => {
+                  // Aborting may synchronously replace this button with the
+                  // submit button before the click's default action runs.
+                  event.preventDefault();
+                  controller.current?.abort();
+                }}
               >
                 Pausar envio
               </button>

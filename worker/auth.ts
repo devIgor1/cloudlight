@@ -63,7 +63,7 @@ export async function requestCode(request: Request, env: Env) {
   );
   const challengeId = id(),
     now = Date.now();
-  if (user) {
+  if (user && (env.PILOT_ENABLED !== "admin" || user.role === "admin")) {
     const value = crypto.getRandomValues(new Uint32Array(1))[0];
     const code = String(value % 1_000_000).padStart(6, "0");
     const payload = await encryptedMail(
@@ -138,13 +138,14 @@ export async function verifyCode(request: Request, env: Env) {
     consumed_nonce: string | null;
   }>(
     env,
-    `UPDATE challenges SET attempts=attempts+1, consumed_at=CASE WHEN code_hash=? THEN ? ELSE NULL END, consumed_nonce=CASE WHEN code_hash=? THEN ? ELSE NULL END WHERE id=? AND consumed_at IS NULL AND expires_at>? AND attempts<5 AND EXISTS(SELECT 1 FROM users WHERE users.id=challenges.user_id AND active=1) RETURNING user_id,consumed_nonce`,
+    `UPDATE challenges SET attempts=attempts+1, consumed_at=CASE WHEN code_hash=? THEN ? ELSE NULL END, consumed_nonce=CASE WHEN code_hash=? THEN ? ELSE NULL END WHERE id=? AND consumed_at IS NULL AND expires_at>? AND attempts<5 AND EXISTS(SELECT 1 FROM users WHERE users.id=challenges.user_id AND active=1 AND (?!='admin' OR role='admin')) RETURNING user_id,consumed_nonce`,
     codeHash,
     now,
     codeHash,
     nonce,
     challengeId,
     now,
+    env.PILOT_ENABLED,
   );
   assert(
     challenge && challenge.consumed_nonce === nonce,

@@ -2,7 +2,7 @@
 
 Transferência privada de arquivos entre amigos. React + TypeScript + Vite, Cloudflare Worker/D1, adaptador S3 para bucket B2 privado e e-mail transacional Brevo.
 
-A primeira versão está publicada em **[cloudlight.igormraesmm.workers.dev](https://cloudlight.igormraesmm.workers.dev)**, com `PILOT_ENABLED=false`: a página está acessível, mas login e transferências permanecem fechados. Cloudflare/D1, bucket privado B2 e Brevo estão configurados, com os cinco secrets gravados. Testes reais pequenos de armazenamento e entrega de e-mail passaram; a validação completa do piloto continua pendente. O ambiente local segue disponível com banco/armazenamento emulados e caixa de e-mail de teste.
+O piloto está disponível em **[cloudlight.igormraesmm.workers.dev](https://cloudlight.igormraesmm.workers.dev)**, com login por convite e transferências habilitados. Cloudflare/D1, B2 privado e Brevo foram validados com upload e download completos de 50 MB e 1 GB, SHA-256 idêntico e retomada após recarga. Os três e-mails do fluxo real tiveram entrega confirmada pelo Brevo. Consulte [as evidências e limitações](docs/VALIDACAO.md) antes de ampliar o grupo; cem usuários simultâneos ainda não foram testados. O ambiente local segue disponível com serviços emulados e caixa de e-mail de teste.
 
 ```sh
 npm ci
@@ -42,9 +42,9 @@ Os testes de integração usam D1 e R2 emulados no runtime workerd. Os testes de
 - `public/assets/`: fontes e shaders locais; procedência em `asset-sources.json`.
 - `reference/`: código da landing anterior, preservado para comparação.
 - `wrangler.local.jsonc`: ambiente local, sem contas ou serviços pagos.
-- `wrangler.jsonc`: modelo de produção com piloto desabilitado.
+- `wrangler.jsonc`: configuração de produção com piloto por convite habilitado.
 - `docs/OPERACAO.md`: configuração das contas, limites, decisões, testes reais e liberação do piloto.
-- `PLANO_IMPLEMENTACAO.md`: etapas executadas e pendências externas.
+- `PLANO_IMPLEMENTACAO.md`: etapas executadas e próximos passos de ampliação.
 
 `dist/` é gerado por Vite. A configuração `.openai/hosting.json` do Site estático anterior foi preservada como histórico; ela não publica a nova API. O destino previsto para o aplicativo é Workers, conforme o plano. Os scripts antigos de reconstrução foram preservados em `reference/scripts/` e não fazem parte do fluxo atual.
 
@@ -52,4 +52,4 @@ Os testes de integração usam D1 e R2 emulados no runtime workerd. Os testes de
 
 Siga [o guia de operação](docs/OPERACAO.md). Configure Cloudflare, B2 privado e remetente Brevo; aplique migrações e grave secrets pelo Wrangler. `npm run deploy` executa preflight. A configuração inicial bloqueia a API; a abertura do piloto exige evidências reais em `pilot-readiness.json`.
 
-A alegação de custo zero permanece uma condição a validar, especialmente caps, egress B2/Cloudflare, assinatura das partes e aprovação do remetente sem domínio próprio.
+Caps, bucket privado, assinaturas, rota B2/Cloudflare e remetente foram verificados. Manter custo zero depende das franquias e do consumo das contas; não há garantia sob carga ou usos externos. A CPU teve P95 de 8 ms e pico de 23 ms, sem interrupções pelo limite nos testes reais. Comece com poucos convidados e reavalie antes de ampliar.
