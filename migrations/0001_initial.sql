@@ -1,0 +1,22 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','user')), active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)), created_at INTEGER NOT NULL);
+CREATE TRIGGER users_limit BEFORE INSERT ON users WHEN (SELECT COUNT(*) FROM users) >= 100 BEGIN SELECT RAISE(ABORT, 'USER_LIMIT'); END;
+CREATE TABLE challenges (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, consumed_at INTEGER, created_at INTEGER NOT NULL);
+CREATE INDEX challenge_user ON challenges(user_id, created_at);
+CREATE INDEX challenge_expiry ON challenges(expires_at);
+CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires_at INTEGER NOT NULL);
+CREATE INDEX session_expiry ON sessions(expires_at);
+CREATE INDEX session_user ON sessions(user_id);
+CREATE TABLE rate_limits (key TEXT PRIMARY KEY, window INTEGER NOT NULL, count INTEGER NOT NULL);
+CREATE TABLE daily_usage (day TEXT NOT NULL, kind TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(day,kind));
+CREATE TABLE transfers (id TEXT PRIMARY KEY, request_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES users(id), recipient TEXT NOT NULL, message TEXT NOT NULL, total_bytes INTEGER NOT NULL CHECK(total_bytes > 0 AND total_bytes <= 1000000000), status TEXT NOT NULL DEFAULT 'uploading' CHECK(status IN ('uploading','ready','revoked','expired','cancelled','deleted')), created_at INTEGER NOT NULL, upload_expires_at INTEGER NOT NULL, expires_at INTEGER, token_hash TEXT UNIQUE, token_cipher TEXT, requests INTEGER NOT NULL DEFAULT 0, UNIQUE(user_id,request_id));
+CREATE INDEX transfers_owner ON transfers(user_id,created_at DESC);
+CREATE INDEX transfers_state ON transfers(status,expires_at);
+CREATE TRIGGER storage_limit BEFORE INSERT ON transfers WHEN COALESCE((SELECT SUM(total_bytes) FROM transfers WHERE status != 'deleted'),0) + NEW.total_bytes > 8000000000 BEGIN SELECT RAISE(ABORT, 'STORAGE_LIMIT'); END;
+CREATE TABLE files (id TEXT PRIMARY KEY, transfer_id TEXT NOT NULL REFERENCES transfers(id) ON DELETE CASCADE, name TEXT NOT NULL, size INTEGER NOT NULL, type TEXT NOT NULL, last_modified INTEGER NOT NULL, object_key TEXT NOT NULL UNIQUE, upload_id TEXT, status TEXT NOT NULL DEFAULT 'pending', lease_until INTEGER NOT NULL DEFAULT 0, lease_owner TEXT, auth_until INTEGER NOT NULL DEFAULT 0);
+CREATE INDEX files_transfer ON files(transfer_id,status);
+CREATE TABLE parts (file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE, number INTEGER NOT NULL, size INTEGER NOT NULL, md5 TEXT NOT NULL, etag TEXT, PRIMARY KEY(file_id,number));
+CREATE TABLE outbox (id TEXT PRIMARY KEY, transfer_id TEXT REFERENCES transfers(id) ON DELETE CASCADE, challenge_id TEXT REFERENCES challenges(id) ON DELETE CASCADE, recipient TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, lease_until INTEGER NOT NULL DEFAULT 0, last_error TEXT, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, UNIQUE(transfer_id));
+CREATE INDEX outbox_due ON outbox(status,next_at,lease_until);
+-- The bootstrap account exists exclusively in the local seed, never in this migration.
+ALTER TABLE challenges ADD COLUMN consumed_nonce TEXT;

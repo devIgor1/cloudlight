@@ -1,11 +1,51 @@
 {
-  "name": "cloudlight-reconstruction",
-  "version": "1.0.0",
+  "name": "cloudlight",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Faithful, self-contained reconstruction of the Cloudlight presentation website.",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "check": "node --check dist/app.js && node --check dist/effects.js && node --check dist/gl-surface.js && node scripts/check.mjs"
+    "dev": "npm run db:local && concurrently -k 'npm:dev:api' 'npm:dev:web'",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:api": "wrangler dev --config wrangler.local.jsonc --port 8787",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit && npm test",
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
+    "test:browser": "playwright test",
+    "db:local": "wrangler d1 migrations apply cloudlight-local --local --config wrangler.local.jsonc && wrangler d1 execute cloudlight-local --local --config wrangler.local.jsonc --file scripts/seed.local.sql",
+    "deploy": "node scripts/preflight.mjs && npm run build && wrangler deploy",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:large": "LARGE_TEST=1 tsx --test tests/large.test.ts",
+    "format": "prettier --write src worker shared tests *.ts *.json *.jsonc index.html"
+  },
+  "dependencies": {
+    "aws4fetch": "^1.0.20",
+    "fast-xml-parser": "^5.11.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "spark-md5": "^3.0.2",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/workers-types": "^5.20261011.1",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/spark-md5": "^3.0.5",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "esbuild": "^0.28.2",
+    "jsonc-parser": "^3.3.1",
+    "miniflare": "5.20261006.1-alpha",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "wrangler": "^4.149.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

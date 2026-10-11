@@ -4,3 +4,11 @@ node_modules/
 *.tar.gz
 *.tar
 qa/
+.wrangler/
+.dev.vars*
+.env*
+!.env.example
+dist/
+test-results/
+playwright-report/
+pilot-readiness.json

@@ -1,0 +1,10 @@
+[
+  {
+    "corsRuleName": "cloudlight-upload-parts",
+    "allowedOrigins": ["https://REPLACE.workers.dev"],
+    "allowedHeaders": ["content-md5", "content-type"],
+    "allowedOperations": ["s3_put"],
+    "exposeHeaders": ["ETag"],
+    "maxAgeSeconds": 300
+  }
+]

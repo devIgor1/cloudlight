@@ -1,0 +1,8 @@
+[
+  {
+    "fileNamePrefix": "transfers/",
+    "daysFromStartingToCancelingUnfinishedLargeFiles": 2,
+    "daysFromUploadingToHiding": 7,
+    "daysFromHidingToDeleting": 1
+  }
+]

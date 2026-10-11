@@ -1,0 +1,16 @@
+{
+  "validatedAt": null,
+  "notes": "Preencher com evidências dos testes reais. A emulação não conta como validação de provedores.",
+  "checks": {
+    "freeAccounts": false,
+    "providerCaps": false,
+    "privateBucket": false,
+    "corsAndSignedRestrictions": false,
+    "real50MBAnd1GB": false,
+    "cloudflareEgress": false,
+    "brevoSender": false,
+    "workerCpu": false,
+    "secretsConfigured": false,
+    "lifecycleRules": false
+  }
+}

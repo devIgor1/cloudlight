@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Um jeito leve de compartilhar arquivos com amigos. Até 1 GB por transferência, links por 48 horas e acesso por convite."
+    />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" href="/assets/icon.svg" />
+    <title>Cloudlight — Arquivos grandes. Caminhos curtos.</title>
+    <script>
+      try {
+        document.documentElement.classList.toggle(
+          "dark",
+          localStorage.getItem("cloudlight-theme") === "dark",
+        );
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cloudlight-local",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cloudlight-local",
+      "database_id": "local",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "LOCAL_BUCKET", "bucket_name": "cloudlight-local-files" },
+  ],
+  "vars": {
+    "APP_ENV": "local",
+    "APP_ORIGIN": "http://127.0.0.1:5173",
+    "PILOT_ENABLED": "true",
+    "AUTH_SECRET": "local-only-change-before-production-32-characters",
+    "MAIL_FROM": "cloudlight@example.test",
+    "MAIL_FROM_NAME": "Cloudlight",
+  },
+}
